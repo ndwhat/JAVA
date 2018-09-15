@@ -1,9 +1,8 @@
-package io.hexlet.boilerplate.Locators;
+package io.hexlet.workshop.ServiceLocator.Locators;
 
-import io.hexlet.boilerplate.Objects.Locate;
+import io.hexlet.workshop.ServiceLocator.Objects.Locate;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -11,9 +10,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 public class IpGeoBaseLocator implements Locator {
@@ -22,6 +24,27 @@ public class IpGeoBaseLocator implements Locator {
     private final String urlBefore = "http://ipgeobase.ru:7020/geo?ip=";
     private Logger logger = Logger.getGlobal();
     private Locate locate = new Locate();
+
+    private Optional<InputStream> inputStreamXml = Optional.empty();
+
+
+    private Optional<InputStream> getInputStreamXml() {
+        return inputStreamXml;
+    }
+
+    public void setInputStreamXml(Optional<InputStream> inputStreamXml) {
+        this.inputStreamXml = inputStreamXml;
+    }
+
+    private InputStream getInputStreamFromConnection(InetAddress address) throws IOException {
+
+            String url = urlBefore + address.getHostAddress();
+            URLConnection urlConnection = new URL(url).openConnection();
+            urlConnection.addRequestProperty("Accept", "application/xml");
+            return (urlConnection.getInputStream());
+
+    }
+
 
     @Override
     public Locate getLocate(InetAddress address) {
@@ -34,12 +57,10 @@ public class IpGeoBaseLocator implements Locator {
             DocumentBuilder b = f.newDocumentBuilder();
 
             //UrlConnection
-            String url = urlBefore + address.getHostAddress();
-            URLConnection urlConnection = new URL(url).openConnection();
-            urlConnection.addRequestProperty("Accept", "application/xml");
+            InputStream inputStream = inputStreamXml.orElse(getInputStreamFromConnection(address));
 
             //Parse
-            Document doc = b.parse(urlConnection.getInputStream());
+            Document doc = b.parse(inputStream);
             doc.getDocumentElement().normalize();
             Element root = doc.getDocumentElement();
             NodeList list = root.getChildNodes();

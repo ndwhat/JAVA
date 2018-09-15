@@ -1,8 +1,8 @@
-package io.hexlet.boilerplate.Services;
+package io.hexlet.workshop.ServiceLocator;
 
 
-import io.hexlet.boilerplate.Locators.Locator;
-import io.hexlet.boilerplate.Objects.Locate;
+import io.hexlet.workshop.ServiceLocator.Locators.Locator;
+import io.hexlet.workshop.ServiceLocator.Objects.Locate;
 
 import java.net.InetAddress;
 

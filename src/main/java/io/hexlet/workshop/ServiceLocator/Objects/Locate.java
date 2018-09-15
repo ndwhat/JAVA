@@ -1,4 +1,4 @@
-package io.hexlet.boilerplate.Objects;
+package io.hexlet.workshop.ServiceLocator.Objects;
 
 public class Locate {
 
