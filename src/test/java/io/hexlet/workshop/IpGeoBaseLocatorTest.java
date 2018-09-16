@@ -2,53 +2,56 @@ package io.hexlet.workshop;
 
 import io.hexlet.workshop.ServiceLocator.Locators.IpGeoBaseLocator;
 import io.hexlet.workshop.ServiceLocator.Objects.Locate;
-
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.*;
-
-import static org.mockito.Mockito.*;
-
-
-import java.io.InputStream;
-import java.net.InetAddress;
+import java.io.*;
+import java.net.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Logger;
-
 import org.junit.jupiter.api.Test;
+import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 
 public class IpGeoBaseLocatorTest {
 
     private static Map<String, String> xmls = new HashMap<>();
 
+    @Mock
+    private static URLStreamHandlerFactory urlStreamHandlerFactory;
+
+    @Mock
+    private static URLConnection mockedConnection = Mockito.mock(URLConnection.class);
+
 
     @BeforeAll
     static void setData() {
-        xmls.put("79.165.0.0", "<ip-answer>\n" +
-                "<ip value=\"79.165.0.0\">\n" +
-                "<inetnum>79.164.16.0 - 79.165.255.255</inetnum>\n" +
-                "<country>RU</country>\n" +
-                "<city>Москва</city>\n" +
-                "<region>Москва</region>\n" +
-                "<district>Центральный федеральный округ</district>\n" +
-                "<lat>55.755787</lat>\n" +
-                "<lng>37.617634</lng>\n" +
-                "</ip>\n" +
-                "</ip-answer>");
-        xmls.put("100.165.0.0", "<ip-answer>\n" +
-                "<message>Incorrect request</message>\n" +
-                "</ip-answer>");
+
+        // Set xmls
+        xmls.put("79.165.0.0", "src/test/resources/xml/moscow.xml");
+        xmls.put("100.165.0.0", "src/test/resources/xml/notfound.xml");
+
+
+        try {
+            urlStreamHandlerFactory = Mockito.mock(URLStreamHandlerFactory.class);
+            URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
+            AbstractPublicStreamHandler publicStreamHandler = Mockito.mock(AbstractPublicStreamHandler.class);
+            Mockito.doReturn(publicStreamHandler).when(urlStreamHandlerFactory).createURLStreamHandler(Matchers.eq("http"));
+            Mockito.doReturn(mockedConnection).when(publicStreamHandler).openConnection(Matchers.any(URL.class));
+        } catch (IOException e) {
+            java.util.logging.Logger logger = Logger.getGlobal();
+            logger.warning("Mockito errors");
+        }
     }
 
     @Test
     void testWithMoscowIP() {
         IpGeoBaseLocator ipGeoBaseLocator = new IpGeoBaseLocator();
         try {
-            InputStream inputStreamMoscow = IOUtils.toInputStream(xmls.get("79.165.0.0"), "UTF-8");
-            ipGeoBaseLocator.setInputStreamXml(Optional.of(inputStreamMoscow));
+            InputStream inputStream = new FileInputStream(xmls.get("79.165.0.0"));
+            Mockito.doReturn(inputStream).when(mockedConnection).getInputStream();
             Locate locate = ipGeoBaseLocator.getLocate(InetAddress.getByName("79.165.0.0"));
             Assertions.assertEquals(locate.getCountry(), "RU");
             Assertions.assertEquals(locate.getCity(), "Москва");
@@ -66,12 +69,10 @@ public class IpGeoBaseLocatorTest {
     void testWithNotFoundIP() {
         IpGeoBaseLocator ipGeoBaseLocator = new IpGeoBaseLocator();
         try {
-            InputStream inputStreamMoscow = IOUtils.toInputStream(xmls.get("100.165.0.0"), "UTF-8");
-            ipGeoBaseLocator.setInputStreamXml(Optional.of(inputStreamMoscow));
+            InputStream inputStream = new FileInputStream(xmls.get("100.165.0.0"));
+            Mockito.doReturn(inputStream).when(mockedConnection).getInputStream();
             Locate locate = ipGeoBaseLocator.getLocate(InetAddress.getByName("100.165.0.0"));
             Assertions.assertNull(locate.getCountry());
-
-
         } catch (Exception e) {
             java.util.logging.Logger logger = Logger.getGlobal();
             logger.warning("Неверный ip");
@@ -79,4 +80,12 @@ public class IpGeoBaseLocatorTest {
     }
 
 
+}
+
+
+abstract class AbstractPublicStreamHandler extends URLStreamHandler {
+    @Override
+    public URLConnection openConnection(URL url) throws IOException {
+        return null;
+    }
 }

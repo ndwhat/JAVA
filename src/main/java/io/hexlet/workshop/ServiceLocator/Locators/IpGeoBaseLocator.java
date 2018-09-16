@@ -1,6 +1,7 @@
 package io.hexlet.workshop.ServiceLocator.Locators;
 
 import io.hexlet.workshop.ServiceLocator.Objects.Locate;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -25,26 +26,6 @@ public class IpGeoBaseLocator implements Locator {
     private Logger logger = Logger.getGlobal();
     private Locate locate = new Locate();
 
-    private Optional<InputStream> inputStreamXml = Optional.empty();
-
-
-    private Optional<InputStream> getInputStreamXml() {
-        return inputStreamXml;
-    }
-
-    public void setInputStreamXml(Optional<InputStream> inputStreamXml) {
-        this.inputStreamXml = inputStreamXml;
-    }
-
-    private InputStream getInputStreamFromConnection(InetAddress address) throws IOException {
-
-            String url = urlBefore + address.getHostAddress();
-            URLConnection urlConnection = new URL(url).openConnection();
-            urlConnection.addRequestProperty("Accept", "application/xml");
-            return (urlConnection.getInputStream());
-
-    }
-
 
     @Override
     public Locate getLocate(InetAddress address) {
@@ -57,10 +38,12 @@ public class IpGeoBaseLocator implements Locator {
             DocumentBuilder b = f.newDocumentBuilder();
 
             //UrlConnection
-            InputStream inputStream = inputStreamXml.orElse(getInputStreamFromConnection(address));
+            String url = urlBefore + address.getHostAddress();
+            URLConnection urlConnection = new URL(url).openConnection();
+            urlConnection.addRequestProperty("Accept", "application/xml");
 
             //Parse
-            Document doc = b.parse(inputStream);
+            Document doc = b.parse(urlConnection.getInputStream());
             doc.getDocumentElement().normalize();
             Element root = doc.getDocumentElement();
             NodeList list = root.getChildNodes();
