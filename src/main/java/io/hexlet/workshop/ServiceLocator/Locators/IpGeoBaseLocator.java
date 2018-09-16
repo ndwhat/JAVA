@@ -11,24 +11,22 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.URL;
 import java.net.URLConnection;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 public class IpGeoBaseLocator implements Locator {
 
 
-    private final String urlBefore = "http://ipgeobase.ru:7020/geo?ip=";
     private Logger logger = Logger.getGlobal();
     private Locate locate = new Locate();
+    private URLConnection urlConnection;
 
+    public IpGeoBaseLocator(URLConnection urlConnection) {
+        this.urlConnection = urlConnection;
+    }
 
     @Override
-    public Locate getLocate(InetAddress address) {
+    public Locate getLocate() {
         try {
 
             //Builder
@@ -38,8 +36,6 @@ public class IpGeoBaseLocator implements Locator {
             DocumentBuilder b = f.newDocumentBuilder();
 
             //UrlConnection
-            String url = urlBefore + address.getHostAddress();
-            URLConnection urlConnection = new URL(url).openConnection();
             urlConnection.addRequestProperty("Accept", "application/xml");
 
             //Parse

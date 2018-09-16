@@ -11,6 +11,6 @@ public class ServiceLocator {
     private ServiceLocator(){}
 
     public static Locate getLocate(InetAddress address, Locator locator) {
-        return locator.getLocate(address);
+        return locator.getLocate();
     }
 }
